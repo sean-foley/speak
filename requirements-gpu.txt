@@ -1,0 +1,20 @@
+# GPU-enabled requirements for NVIDIA CUDA support
+# Use this on systems with NVIDIA GPUs (desktop, servers, Jetson devices)
+
+# Core TTS Engine
+piper-tts>=1.2.0
+
+# CLI Framework
+click>=8.1.0
+
+# Audio Processing & Playback
+numpy>=1.24.0
+sounddevice>=0.4.6
+soundfile>=0.12.1
+
+# ONNX Runtime with GPU support
+# NOTE: This requires CUDA 11.x or 12.x to be installed on your system
+onnxruntime-gpu>=1.16.0
+
+# For Jetson devices, you may need to build from source or use JetPack's version
+# See: https://elinux.org/Jetson_Zoo#ONNX_Runtime

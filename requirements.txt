@@ -1,0 +1,14 @@
+# Core TTS Engine
+piper-tts>=1.2.0
+
+# CLI Framework
+click>=8.1.0
+
+# Audio Processing & Playback
+numpy>=1.24.0
+sounddevice>=0.4.6
+soundfile>=0.12.1
+
+# Optional: Web API (uncomment if needed)
+# fastapi>=0.104.0
+# uvicorn>=0.24.0

@@ -1,0 +1,41 @@
+[project]
+name = "speak"
+version = "0.1.0"
+description = "Text-to-speech CLI using Piper TTS"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+keywords = ["tts", "text-to-speech", "piper", "speech-synthesis", "neural-tts"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+dependencies = [
+    "piper-tts>=1.2.0",
+    "click>=8.1.0",
+    "numpy>=1.24.0",
+    "sounddevice>=0.4.6",
+    "soundfile>=0.12.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+speak = "src.speak:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
