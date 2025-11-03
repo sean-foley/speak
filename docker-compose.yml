@@ -24,6 +24,9 @@ services:
       USE_GPU: "false"
       SKIP_IF_LOCKED: "true"
 
+      # Audio Device (optional, specify ALSA device like plughw:1,0)
+      # AUDIO_DEVICE: ""
+
     # Audio device access (required for playback)
     devices:
       - /dev/snd:/dev/snd  # ALSA audio devices
@@ -67,6 +70,9 @@ services:
       # TTS Options
       USE_GPU: "true"
       SKIP_IF_LOCKED: "true"
+
+      # Audio Device (optional, specify ALSA device like plughw:1,0)
+      # AUDIO_DEVICE: ""
 
       # NVIDIA specific
       NVIDIA_VISIBLE_DEVICES: all

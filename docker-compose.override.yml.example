@@ -17,6 +17,9 @@ services:
       # Override TTS options
       SKIP_IF_LOCKED: "true"
 
+      # Specify audio device (optional)
+      AUDIO_DEVICE: "plughw:1,0"
+
   speak-mqtt-gpu:
     environment:
       # Override MQTT settings for GPU version
@@ -29,3 +32,6 @@ services:
       # GPU settings
       USE_GPU: "true"
       SKIP_IF_LOCKED: "true"
+
+      # Specify audio device (optional)
+      AUDIO_DEVICE: "plughw:1,0"

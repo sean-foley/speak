@@ -224,11 +224,16 @@ def text_to_speech(text: str, output_file: str, model_path: str = None, play_aud
         try:
             click.echo("Playing audio...")
 
+            # Get audio device from environment variable (optional)
+            audio_device = os.getenv('AUDIO_DEVICE', None)  # None = use default
+            if audio_device:
+                click.echo(f"Using audio device: {audio_device}")
+
             # Try to detect supported sample rates and resample if needed
             try:
                 # Query default output device
-                device_info = sd.query_devices(kind='output')
-                click.echo("using device:" + device_info)
+                device_info = sd.query_devices(device=audio_device, kind='output')
+                click.echo("using device:" + str(device_info))
                 default_sr = int(device_info['default_samplerate'])
 
                 # If device doesn't support Piper's rate, resample
@@ -244,7 +249,7 @@ def text_to_speech(text: str, output_file: str, model_path: str = None, play_aud
                 for fallback_sr in [48000, 44100, 22050]:
                     try:
                         test_data = audio_data[:100]  # Test with small chunk
-                        sd.play(test_data, fallback_sr, blocking=False)
+                        sd.play(test_data, fallback_sr, device=audio_device, blocking=False)
                         sd.stop()
                         if fallback_sr != sample_rate:
                             click.echo(f"Resampling from {sample_rate}Hz to {fallback_sr}Hz...")
@@ -257,7 +262,7 @@ def text_to_speech(text: str, output_file: str, model_path: str = None, play_aud
                         continue
 
             # Play audio
-            sd.play(audio_data, sample_rate)
+            sd.play(audio_data, sample_rate, device=audio_device)
             sd.wait()
             click.echo("✓ Playback complete")
 
