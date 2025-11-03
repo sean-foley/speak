@@ -221,10 +221,49 @@ def text_to_speech(text: str, output_file: str, model_path: str = None, play_aud
 
     # Play audio if requested
     if play_audio:
-        click.echo("Playing audio...")
-        sd.play(audio_data, sample_rate)
-        sd.wait()
-        click.echo("✓ Playback complete")
+        try:
+            click.echo("Playing audio...")
+
+            # Try to detect supported sample rates and resample if needed
+            try:
+                # Query default output device
+                device_info = sd.query_devices(kind='output')
+                default_sr = int(device_info['default_samplerate'])
+
+                # If device doesn't support Piper's rate, resample
+                if sample_rate != default_sr:
+                    click.echo(f"Resampling from {sample_rate}Hz to {default_sr}Hz...")
+                    from scipy import signal
+                    num_samples = int(len(audio_data) * default_sr / sample_rate)
+                    audio_data = signal.resample(audio_data, num_samples).astype(np.int16)
+                    sample_rate = default_sr
+            except Exception as e:
+                # If device query fails, try common rates
+                click.echo(f"Could not query device, trying common sample rates... ({e})")
+                for fallback_sr in [48000, 44100, 22050]:
+                    try:
+                        test_data = audio_data[:100]  # Test with small chunk
+                        sd.play(test_data, fallback_sr, blocking=False)
+                        sd.stop()
+                        if fallback_sr != sample_rate:
+                            click.echo(f"Resampling from {sample_rate}Hz to {fallback_sr}Hz...")
+                            from scipy import signal
+                            num_samples = int(len(audio_data) * fallback_sr / sample_rate)
+                            audio_data = signal.resample(audio_data, num_samples).astype(np.int16)
+                            sample_rate = fallback_sr
+                        break
+                    except:
+                        continue
+
+            # Play audio
+            sd.play(audio_data, sample_rate)
+            sd.wait()
+            click.echo("✓ Playback complete")
+
+        except Exception as e:
+            click.echo(f"Warning: Audio playback failed: {e}", err=True)
+            click.echo("Audio file was saved successfully, but playback is unavailable.", err=True)
+            # Don't exit - file was saved successfully
 
     return str(output_path)
 

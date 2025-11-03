@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation (not needed in container)
+docs/
+*.md
+!README.md
+
+# Test files
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Output files (will be generated)
+output/
+*.wav
+*.mp3
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.local
+
+# Large model files (downloaded during build)
+# models/
+
+# Setup scripts (not needed)
+setup.sh
+
+# Docker files themselves
+Dockerfile
+docker-compose.yml
+.dockerignore
