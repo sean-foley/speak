@@ -228,6 +228,7 @@ def text_to_speech(text: str, output_file: str, model_path: str = None, play_aud
             try:
                 # Query default output device
                 device_info = sd.query_devices(kind='output')
+                click.echo("using device:" + device_info)
                 default_sr = int(device_info['default_samplerate'])
 
                 # If device doesn't support Piper's rate, resample
