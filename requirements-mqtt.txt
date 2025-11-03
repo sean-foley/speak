@@ -1,0 +1,8 @@
+# MQTT Integration dependencies
+# Install with: pip install -r requirements-mqtt.txt
+
+# Base TTS requirements
+-r requirements.txt
+
+# MQTT client library for speak-mqtt.py
+paho-mqtt>=2.0.0

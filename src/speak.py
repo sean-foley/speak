@@ -8,11 +8,66 @@ Licensed under the MIT License - see LICENSE.md for details
 
 import os
 import sys
+import time
 from pathlib import Path
+import fcntl  # Unix file locking
 import click
 import sounddevice as sd
 import soundfile as sf
 import numpy as np
+
+
+class SpeakLock:
+    """
+    File-based lock to prevent concurrent speak instances.
+    Uses fcntl (Unix/Linux) for advisory file locking.
+    """
+    def __init__(self, lockfile_path: str = "/tmp/speak.lock", timeout: float = None, fail_if_locked: bool = False):
+        self.lockfile_path = lockfile_path
+        self.timeout = timeout
+        self.fail_if_locked = fail_if_locked
+        self.lockfile = None
+
+    def __enter__(self):
+        self.lockfile = open(self.lockfile_path, 'w')
+
+        if self.fail_if_locked:
+            # Non-blocking - fail immediately if locked
+            try:
+                fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                self.lockfile.close()
+                raise RuntimeError("Another speak instance is already running. Skipping.")
+        elif self.timeout:
+            # Try to acquire lock with timeout
+            start_time = time.time()
+            while True:
+                try:
+                    fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except IOError:
+                    if time.time() - start_time > self.timeout:
+                        self.lockfile.close()
+                        raise TimeoutError(f"Could not acquire lock after {self.timeout}s. Another instance is running.")
+                    time.sleep(0.1)
+        else:
+            # Blocking - wait indefinitely
+            fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_EX)
+
+        # Write PID to lockfile for debugging
+        self.lockfile.write(f"{os.getpid()}\n")
+        self.lockfile.flush()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.lockfile:
+            fcntl.flock(self.lockfile.fileno(), fcntl.LOCK_UN)
+            self.lockfile.close()
+            # Optionally remove lockfile
+            try:
+                os.unlink(self.lockfile_path)
+            except:
+                pass
 
 
 def load_piper_voice(model_path: str = None, use_gpu: bool = False):
@@ -182,16 +237,21 @@ def text_to_speech(text: str, output_file: str, model_path: str = None, play_aud
               help='Output WAV file path (default: output/speech.wav)')
 @click.option('-m', '--model', 'model_path', type=click.Path(exists=True),
               help='Path to Piper .onnx model file (optional)')
-@click.option('-p', '--play', is_flag=True, help='Play audio after generation')
+@click.option('--no-play', is_flag=True, help='Save to file only (skip audio playback)')
 @click.option('--gpu', is_flag=True, help='Enable GPU acceleration (CUDA/TensorRT for NVIDIA)')
-def main(input_file, text, output, model_path, play, gpu):
+@click.option('--no-lock', is_flag=True, help='Disable process locking (allow concurrent instances)')
+@click.option('--lock-timeout', type=float, default=None,
+              help='Lock timeout in seconds (default: wait indefinitely)')
+@click.option('--skip-if-locked', is_flag=True,
+              help='Skip if another instance is running (for MQTT/queue scenarios)')
+def main(input_file, text, output, model_path, no_play, gpu, no_lock, lock_timeout, skip_if_locked):
     """
     Speak - Convert text to speech using Piper TTS
 
     Examples:
         speak -f examples/hello-world.txt
         speak -t "Hello, world!" -o output/hello.wav
-        speak -f input.txt -p  # Convert and play
+        speak -f input.txt --no-play  # Save only, don't play
     """
     # Validate input
     if not input_file and not text:
@@ -213,9 +273,28 @@ def main(input_file, text, output, model_path, play, gpu):
 
     click.echo(f"Text: {text_content[:100]}..." if len(text_content) > 100 else f"Text: {text_content}")
 
-    # Convert to speech
+    # Convert to speech with optional locking
     try:
-        text_to_speech(text_content, output, model_path, play, use_gpu=gpu)
+        if no_lock:
+            # No locking - allow concurrent instances
+            text_to_speech(text_content, output, model_path, not no_play, use_gpu=gpu)
+        else:
+            # Use file lock to prevent concurrent instances
+            lock = SpeakLock(
+                timeout=lock_timeout,
+                fail_if_locked=skip_if_locked
+            )
+            try:
+                with lock:
+                    text_to_speech(text_content, output, model_path, not no_play, use_gpu=gpu)
+            except RuntimeError as e:
+                # Another instance is running and --skip-if-locked was used
+                click.echo(f"⏭️  {e}", err=True)
+                sys.exit(2)  # Exit code 2 = skipped
+            except TimeoutError as e:
+                # Lock timeout exceeded
+                click.echo(f"⏱️  {e}", err=True)
+                sys.exit(3)  # Exit code 3 = timeout
     except Exception as e:
         click.echo(f"Error during conversion: {e}", err=True)
         sys.exit(1)
