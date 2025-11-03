@@ -1,0 +1,31 @@
+# docker-compose.override.yml
+# Copy this file to docker-compose.override.yml and customize for your environment
+# The override file is automatically used by docker-compose
+
+version: '3.8'
+
+services:
+  speak-mqtt-cpu:
+    environment:
+      # Override MQTT settings
+      MQTT_SERVER: your-mqtt-server.local
+      MQTT_PORT: 1883
+      MQTT_TOPIC: home/tts
+      MQTT_USERNAME: your-username
+      MQTT_PASSWORD: your-password
+
+      # Override TTS options
+      SKIP_IF_LOCKED: "true"
+
+  speak-mqtt-gpu:
+    environment:
+      # Override MQTT settings for GPU version
+      MQTT_SERVER: your-mqtt-server.local
+      MQTT_PORT: 1883
+      MQTT_TOPIC: home/tts
+      MQTT_USERNAME: your-username
+      MQTT_PASSWORD: your-password
+
+      # GPU settings
+      USE_GPU: "true"
+      SKIP_IF_LOCKED: "true"

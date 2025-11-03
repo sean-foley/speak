@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # CPU-only version (Mac, Linux, general use)
+  speak-mqtt-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PLATFORM: cpu
+    image: speak-mqtt:cpu
+    container_name: speak-mqtt-cpu
+    restart: unless-stopped
+
+    environment:
+      # MQTT Configuration
+      MQTT_SERVER: mqtt.example.com
+      MQTT_PORT: 1883
+      MQTT_TOPIC: tts/speak
+      MQTT_USERNAME: ""
+      MQTT_PASSWORD: ""
+
+      # TTS Options
+      USE_GPU: "false"
+      SKIP_IF_LOCKED: "true"
+
+    # Audio device access (required for playback)
+    devices:
+      - /dev/snd:/dev/snd  # ALSA audio devices
+
+    # Optional: IPC for shared memory (improves performance)
+    ipc: host
+
+    # Optional: Persist output files
+    volumes:
+      - ./output:/app/output
+
+    # CPU resource limits (optional)
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # GPU version (NVIDIA Jetson AGX Orin, Jetson Orin Nano)
+  speak-mqtt-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PLATFORM: gpu
+    image: speak-mqtt:gpu
+    container_name: speak-mqtt-gpu
+    restart: unless-stopped
+
+    environment:
+      # MQTT Configuration
+      MQTT_SERVER: mqtt.example.com
+      MQTT_PORT: 1883
+      MQTT_TOPIC: tts/speak
+      MQTT_USERNAME: ""
+      MQTT_PASSWORD: ""
+
+      # TTS Options
+      USE_GPU: "true"
+      SKIP_IF_LOCKED: "true"
+
+      # NVIDIA specific
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+
+    # Audio device access
+    devices:
+      - /dev/snd:/dev/snd
+
+    # NVIDIA GPU runtime
+    runtime: nvidia
+
+    # Volumes
+    volumes:
+      - ./output:/app/output
+
+    # GPU resource limits
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+# Network (optional, if MQTT broker is also in docker)
+networks:
+  default:
+    name: mqtt-tts-network

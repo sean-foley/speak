@@ -11,7 +11,27 @@ Convert text to natural-sounding speech using Piper TTS. Fast, offline, and priv
 
 ## Quick Start
 
-### 1. Install Dependencies
+### Option 1: Docker (Recommended) 🐳
+
+**Run MQTT listener in Docker (works on Mac, Linux, Jetson):**
+
+```bash
+# 1. Configure MQTT settings
+cp .env.example .env
+nano .env
+
+# 2. Start container
+docker-compose up -d speak-mqtt-cpu
+
+# 3. View logs
+docker-compose logs -f speak-mqtt-cpu
+```
+
+See [Docker Setup Guide](docs/DOCKER_SETUP.md) for full documentation.
+
+### Option 2: Local Installation
+
+#### 1. Install Dependencies
 
 **CPU-only (Default):**
 ```bash
@@ -111,6 +131,49 @@ Loading Piper voice model from models/en_US-lessac-medium.onnx...
 - **Multiple voices** - support for custom Piper models
 - **Simple CLI** - easy to use and script
 - **GPU acceleration** - NVIDIA CUDA/TensorRT support
+- **MQTT integration** - Listen to MQTT topics and speak messages
+- **Docker support** - Run in containers on any platform
+
+## MQTT Integration
+
+Listen to MQTT topics and automatically convert messages to speech:
+
+```bash
+# Local installation
+python src/speak-mqtt.py -s mqtt.example.com -t tts/speak --gpu --skip-if-locked
+
+# Docker (recommended)
+docker-compose up -d speak-mqtt-cpu
+```
+
+See [MQTT Integration Guide](docs/MQTT_INTEGRATION.md) for detailed usage.
+
+## Docker Deployment
+
+### Quick Start with Docker Compose
+
+```bash
+# 1. Copy and configure environment
+cp .env.example .env
+# Edit MQTT_SERVER, MQTT_TOPIC, etc.
+
+# 2. Start container
+docker-compose up -d speak-mqtt-cpu  # CPU version
+# OR
+docker-compose up -d speak-mqtt-gpu  # GPU version (Jetson)
+
+# 3. Check logs
+docker-compose logs -f speak-mqtt-cpu
+```
+
+### Supported Platforms
+
+- ✅ **Mac** (Intel and Apple Silicon)
+- ✅ **Linux** (x86_64, ARM64)
+- ✅ **NVIDIA Jetson AGX Orin**
+- ✅ **NVIDIA Jetson Orin Nano**
+
+See [Docker Setup Guide](docs/DOCKER_SETUP.md) for complete instructions.
 
 ## Requirements
 
